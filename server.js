@@ -1,6 +1,5 @@
 // import our dependencies
 const express = require("express");
-const { restart } = require("nodemon");
 const app = express();
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
@@ -17,24 +16,22 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME
 });
 
-//test the connection
-db.connect((err) => {
-  //if connection is not successful
-  if(err) {
-    console.log("Error", err)
-  }
-  //if connection is not successful
-    console.log("successfully")
+
+
+console.log(process.env.DB_USERNAME);
+
+// testing connection
+app.get('/', (req,res) => {
+  res.send('login sucessful');
 })
 
 //QUESTION 1
   // Retrieve all patients
 app.get('/patients', (req, res) => {
-  const query = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients';
-  db.query(query, (err, results) => {
+  const sql = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients';
+  db.query(sql, (err, results) => {
       if (err) {
-          console.error('Error fetching patients:', err);
-          res.status(500).send('Error fetching patients');
+          return res.status(500).send(err);
       } else {
           res.json(results);
       }
@@ -48,8 +45,7 @@ app.get('/providers', (req, res) => {
   const query = 'SELECT first_name, last_name, provider_specialty FROM providers';
   db.query(query, (err, results) => {
       if (err) {
-          console.error('Error fetching providers:', err);
-          res.status(500).send('Error fetching providers');
+          return res.status(500).send(err);
       } else {
           res.json(results);
       }
@@ -58,33 +54,38 @@ app.get('/providers', (req, res) => {
 
 //QUESTION 3
 // Filter patients by first name
-app.get('/patients/first-name/:firstName', (req, res) => {
-  const firstName = req.params.firstName;
-  const query = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients WHERE first_name = ?';
-  db.query(query, [firstName], (err, results) => {
+app.get('/first_name', (req, res) => {
+  const first_name = req.query.firstName;
+  console.log({first_name});
+  const sql = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients WHERE first_name = ?';
+  db.query(sql, [first_name], (err, results) => {
       if (err) {
-          console.error('Error fetching patients by first name:', err);
-          res.status(500).send('Error fetching patients');
+          return res.status(500).send(err);
       } else {
-          res.json(results);
+        res.json({results:results});
       }
   });
 });
 
 //QUESTION 4
 // Retrieve providers by specialty
-app.get('/providers/specialty/:specialty', (req, res) => {
-  const specialty = req.params.specialty;
-  const query = 'SELECT first_name, last_name, provider_specialty FROM providers WHERE provider_specialty = ?';
-  db.query(query, [specialty], (err, results) => {
+
+  // method 1
+  app.get('/providers_specialty', (req, res) => {
+
+  const specialty = req.query.specialty;
+  console.log({specialty});
+  const sql = 'SELECT first_name, last_name, provider_specialty FROM providers WHERE provider_specialty = ?';
+  db.query(sql, [specialty], (err, results) => {
       if (err) {
-          console.error('Error fetching providers by specialty:', err);
-          res.status(500).send('Error fetching providers');
+          return res.status(500).send(err);
       } else {
-          res.json(results);
+          res.json({results:results});
       }
   });
 });
+// in the url type everything plus /providers_specialty?specialty=Surgery
+
 
 // start and listen to the server 
 app.listen(3300, () => {
